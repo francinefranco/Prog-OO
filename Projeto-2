@@ -1,0 +1,153 @@
+import * as readline from "readline";
+
+class Cliente {
+  constructor(
+    public nome: string,
+    public tel: string,
+    public email: string
+  ) {}
+}
+
+class Bicicleta {
+  constructor(
+    public num: number,
+    public modelo: string,
+    public alugada: boolean = false
+  ) {}
+}
+
+class Aluguel {
+  constructor(
+    public bicicleta: Bicicleta,
+    public cliente: Cliente,
+    public dataInicio: Date,
+    public funcionario: string
+  ) {}
+}
+
+class SistemaAluguelBicicletas {
+  private bicicletas: Bicicleta[] = [];
+  private alugueis: Aluguel[] = [];
+  private clientes: Cliente[] = [];
+
+  constructor(private funcionarios: string[]) {}
+
+  adicionarBicicleta(modelo: string) {
+    const novaBicicleta = new Bicicleta(this.bicicletas.length + 1, modelo);
+    this.bicicletas.push(novaBicicleta);
+  }
+
+  bicicletasDisponiveis() {
+    return this.bicicletas.filter(bicicleta => !bicicleta.alugada);
+  }
+
+  alugarBicicleta(cliente: Cliente, bicicleta: Bicicleta, dataInicio: Date, funcionario: string) {
+    if (!bicicleta.alugada) {
+      bicicleta.alugada = true;
+      const novoAluguel = new Aluguel(bicicleta, cliente, dataInicio, funcionario);
+      this.alugueis.push(novoAluguel);
+    } else {
+      throw new Error("Essa bicicleta já está alugada");
+    }
+  }
+
+  devolverBicicleta(bicicleta: Bicicleta, dataFim: Date) {
+    const aluguel = this.alugueis.find(a => a.bicicleta === bicicleta && !a.dataFim);
+
+    if (aluguel) {
+      aluguel.dataFim = dataFim;
+      bicicleta.alugada = false;
+    } else {
+      throw new Error("Essa bicicleta não está alugada");
+    }
+  }
+
+  adicionarCliente(cliente: Cliente) {
+    this.clientes.push(cliente);
+  }
+
+  removerCliente(cliente: Cliente) {
+    const index = this.clientes.indexOf(cliente);
+    if (index !== -1) {
+      this.clientes.splice(index, 1);
+    }
+  }
+  listarAlugueis() {
+    return this.alugueis.filter(aluguel => !aluguel.dataFim);
+  }
+}
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+function start() {
+  const funcionarios = ["Thiago", "Debora", "Maria", "Lucas", "Isabela"];
+  const sistema = new SistemaAluguelBicicletas(funcionarios);
+
+  rl.question("Digite o modelo da bicicleta: ", modelo => {
+    sistema.adicionarBicicleta(modelo);
+
+    rl.question("Digite o seu nome de funcionário: ", funcionario => {
+      if (!funcionarios.includes(funcionario)) {
+        console.log("Funcionário não reconhecido. Encerrando.");
+        rl.close();
+        return;
+      }
+
+      rl.question("Informe o nome do cliente: ", nomeCliente => {
+        rl.question("Informe o telefone do cliente: ", telefoneCliente => {
+          rl.question("Informe o email do cliente: ", emailCliente => {
+            const cliente = new Cliente(nomeCliente, telefoneCliente, emailCliente);
+            sistema.adicionarCliente(cliente);
+
+            const bicicletasDisponiveis = sistema.bicicletasDisponiveis();
+            console.log("Bicicletas disponíveis:");
+            bicicletasDisponiveis.forEach(bicicleta => {
+              console.log(`${bicicleta.num}. ${bicicleta.modelo}`);
+            });
+
+            rl.question("Escolha o número da bicicleta que deseja alugar: ", bicicletaNumero => {
+              const bicicletaEscolhida = bicicletasDisponiveis.find(bicicleta => bicicleta.num === parseInt(bicicletaNumero));
+
+              if (!bicicletaEscolhida) {
+                console.log("Bicicleta não encontrada. Encerrando.");
+                rl.close();
+                return;
+              }
+
+              const dataInicio = new Date();
+
+              sistema.alugarBicicleta(cliente, bicicletaEscolhida, dataInicio, funcionario);
+              console.log("Bicicleta alugada com sucesso.");
+
+              const alugueis = sistema.listarAlugueis();
+              console.log("Aluguéis em andamento:");
+              alugueis.forEach(aluguel => {
+                console.log(`Cliente: ${aluguel.cliente.nome}, Bicicleta: ${aluguel.bicicleta.modelo}`);
+              });
+
+              rl.question("Deseja devolver a bicicleta? (S/N): ", resposta => {
+                if (resposta.toLowerCase() === "s") {
+                  const dataFim = new Date();
+                  sistema.devolverBicicleta(bicicletaEscolhida, dataFim);
+                  console.log("Bicicleta devolvida com sucesso.");
+                }
+                else{
+                  console.log("Encerrando.")
+                  rl.close();
+                  return;
+                }
+
+                rl.close();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+start ();
