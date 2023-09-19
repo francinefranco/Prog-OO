@@ -32,5 +32,11 @@ describe('App', () => {
     })
 
     it('should throw an exception when trying to move an unregistered bike', () => {
-    })
+        const app = new App();
+        const bike = new Bike('Caloi mountainbike', 'mountain bike', 1234, 1234, 100.0, 'My bike', 5, []);
+        const testFunction = () => {
+          app.moveBikeTo(bike.id, new Location(40.753056, -73.983056));
+        };
+        expect(testFunction).toThrowError("Bicicleta não registrada.");
+    });
 })
