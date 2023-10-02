@@ -65,7 +65,7 @@ export class App {
         const now = new Date();
         const rent = await this.rentRepo.findOpen(bikeId, userEmail);
         if (!rent) {
-            throw new RentNotFoundError(); // Substitua pela exceção específica
+            throw new RentNotFoundError();
         }
         rent.end = now;
         await this.rentRepo.update(rent.id, rent);
