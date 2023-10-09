@@ -45,8 +45,14 @@ export class App {
     }
 
     async removeUser(email: string): Promise<void> {
-        await this.findUser(email)
-        await this.userRepo.remove(email)
+        const user = await this.findUser(email);
+        const openRents = await this.rentRepo.findOpenRentsFor(email);
+
+        if (openRents.length > 0) {
+            throw new Error('Não é possível remover o usuário, pois há aluguéis em aberto.');
+        }
+
+        await this.userRepo.remove(email);
     }
     
     async rentBike(bikeId: string, userEmail: string): Promise<string> {
